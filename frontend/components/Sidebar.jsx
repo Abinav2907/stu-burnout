@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const MENU_ITEMS = [
-  { name: 'Dashboard',        icon: '⚡', href: '/dashboard' },
-  { name: 'AI Chatbot',       icon: '🤖', href: '/chatbot'   },
-  { name: 'Burnout Risk',     icon: '🧠', href: '/burnout'   },
-  { name: 'Study Notes',      icon: '📝', href: '/notes'     },
-  { name: 'Pomodoro',         icon: '⏱️', href: '/pomodoro'  },
+  { name: 'Dashboard',      icon: '⚡', href: '/dashboard' },
+  { name: 'AI Chatbot',     icon: '🤖', href: '/chatbot'   },
+  { name: 'Burnout Risk',   icon: '🧠', href: '/burnout'   },
+  { name: 'Topic Quiz',     icon: '🎯', href: '/quiz'      },
+  { name: 'Study Notes',    icon: '📝', href: '/notes'     },
+  { name: 'Pomodoro',       icon: '⏱️', href: '/pomodoro'  },
 ];
 
 /* ─── Desktop Sidebar ─── */

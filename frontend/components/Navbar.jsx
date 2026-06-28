@@ -6,11 +6,12 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 const LINKS = [
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'AI Chatbot', href: '/chatbot' },
+  { name: 'Dashboard',       href: '/dashboard' },
+  { name: 'AI Chatbot',      href: '/chatbot'   },
   { name: 'Burnout Predictor', href: '/burnout' },
-  { name: 'Study Notes', href: '/notes' },
-  { name: 'Pomodoro', href: '/pomodoro' },
+  { name: 'Topic Quiz',      href: '/quiz'      },
+  { name: 'Study Notes',     href: '/notes'     },
+  { name: 'Pomodoro',        href: '/pomodoro'  },
 ];
 
 export default function Navbar({ onMenuClick }) {

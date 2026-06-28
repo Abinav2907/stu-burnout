@@ -8,19 +8,18 @@ import StatsCard from '@/components/StatsCard';
 import FeatureCard from '@/components/FeatureCard';
 
 const STATS = [
-  { label: 'Resume Score',    value: '88', unit: '%',    color: 'text-violet-400',  icon: '📄' },
-  { label: 'Interview Score', value: '76', unit: '%',    color: 'text-cyan-400',    icon: '🎤' },
-  { label: 'Risk Level',      value: '18', unit: '%',    color: 'text-emerald-400', icon: '🧠' },
-  { label: 'Study Streak',    value: '12', unit: ' days', color: 'text-amber-400',   icon: '🔥' },
+  { label: 'Quiz Score',     value: '92', unit: '%',    color: 'text-violet-400',  icon: '🎯' },
+  { label: 'ML Prediction',  value: 'LOW',unit: '',     color: 'text-emerald-400', icon: '🧠' },
+  { label: 'Risk Level',     value: '18', unit: '%',    color: 'text-cyan-400',    icon: '📊' },
+  { label: 'Study Streak',   value: '12', unit: ' days', color: 'text-amber-400',   icon: '🔥' },
 ];
 
 const FEATURES = [
-  { title: 'Resume Analyzer',        description: 'AI-powered resume analysis against industry benchmarks with instant actionable feedback.',    icon: '📄', href: '/resume',   gradient: 'from-violet-600 to-indigo-600', stats: 'Ready'    },
-  { title: 'Interview Prep',         description: 'Simulate real interviews with AI evaluation and personalised performance scoring.',           icon: '🎤', href: '/interview', gradient: 'from-cyan-600 to-blue-600',   stats: 'Ready'    },
-  { title: 'Burnout Predictor',      description: '4-step cognitive analysis to detect burnout risk and generate your personal wellness plan.',  icon: '🧠', href: '/burnout',   gradient: 'from-red-600 to-orange-500',  stats: 'Low Risk' },
-  { title: 'AI Study Chatbot',       description: 'Your 24/7 AI tutor — generates study timetables, explains concepts, and beats exam anxiety.', icon: '🤖', href: '/chatbot',   gradient: 'from-emerald-600 to-teal-500', stats: 'Active'   },
-  { title: 'Study Notes Generator',  description: 'Transform any topic into beautiful structured study notes with practice Q&A instantly.',      icon: '📝', href: '/notes',     gradient: 'from-amber-600 to-yellow-500', stats: 'Updated'  },
-  { title: 'Pomodoro Timer',         description: 'Focus-interval timer with session tracking and task checklist to eliminate distractions.',    icon: '⏱️', href: '/pomodoro',  gradient: 'from-pink-600 to-rose-500',   stats: 'Ready'    },
+  { title: 'Burnout Predictor',     description: '4-step cognitive analysis to detect burnout risk and generate your personal wellness plan.',  icon: '🧠', href: '/burnout',   gradient: 'from-red-600 to-orange-500',   stats: 'Low Risk' },
+  { title: 'AI Study Chatbot',      description: 'Your 24/7 AI tutor — generates study timetables, explains concepts, and beats exam anxiety.', icon: '🤖', href: '/chatbot',   gradient: 'from-emerald-600 to-teal-500', stats: 'Active'   },
+  { title: 'Topic Quiz',            description: 'Test your knowledge with AI-generated multiple choice quizzes on any subject and topic.',        icon: '🎯', href: '/quiz',      gradient: 'from-violet-600 to-blue-600',  stats: 'Ready'    },
+  { title: 'Study Notes Generator', description: 'Transform any topic into beautiful structured study notes with practice Q&A instantly.',         icon: '📝', href: '/notes',     gradient: 'from-amber-600 to-yellow-500', stats: 'Updated'  },
+  { title: 'Pomodoro Timer',        description: 'Focus-interval timer with session tracking and task checklist to eliminate distractions.',        icon: '⏱️', href: '/pomodoro',  gradient: 'from-pink-600 to-rose-500',    stats: 'Ready'    },
 ];
 
 const ACTIVITIES = [
