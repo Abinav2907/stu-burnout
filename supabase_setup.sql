@@ -73,5 +73,34 @@ DROP POLICY IF EXISTS "allow_all_notes_history" ON public.notes_history;
 CREATE POLICY "allow_all_notes_history" ON public.notes_history
   FOR ALL USING (true) WITH CHECK (true);
 
+-- ── 5. FOCUS SESSIONS ─────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.focus_sessions (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id     text NOT NULL,
+  duration    int NOT NULL,         -- duration in minutes
+  mode        text NOT NULL,         -- 'Focus' | 'Short' | 'Long'
+  created_at  timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.focus_sessions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "allow_all_focus_sessions" ON public.focus_sessions;
+CREATE POLICY "allow_all_focus_sessions" ON public.focus_sessions
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- ── 6. POMODORO TASKS ─────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.pomodoro_tasks (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id     text NOT NULL,
+  text        text NOT NULL,
+  completed   boolean DEFAULT false,
+  created_at  timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.pomodoro_tasks ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "allow_all_pomodoro_tasks" ON public.pomodoro_tasks;
+CREATE POLICY "allow_all_pomodoro_tasks" ON public.pomodoro_tasks
+  FOR ALL USING (true) WITH CHECK (true);
+
 -- ── Done ──────────────────────────────────────────────────
--- After running, verify in Table Editor that all 4 tables appear.
+-- After running, verify in Table Editor that all 6 tables appear.
+

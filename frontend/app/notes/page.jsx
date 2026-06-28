@@ -33,7 +33,12 @@ export default function NotesPage() {
     setIsLoading(true);
     setNotes(null);
     try {
-      const res = await axios.post(`${API_URL}/api/notes/generate`, { subject, topic, detailLevel });
+      const res = await axios.post(`${API_URL}/api/notes/generate`, {
+        subject,
+        topic,
+        detailLevel,
+        userId: 'student_001'
+      });
       // Backend returns { success, notes: {...} } OR { success, ...fields } 
       const data = res.data?.notes ?? res.data;
       setNotes(data);

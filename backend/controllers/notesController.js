@@ -1,117 +1,182 @@
+const { createClient } = require('@supabase/supabase-js');
 const { callAI } = require('../utils/aiHelper');
 
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_KEY || ''
+);
+
 exports.generateNotes = async (req, res) => {
-  const { subject, topic, detailLevel = 'Detailed' } = req.body;
+  const { subject, topic, detailLevel = 'Detailed', userId = 'student_001' } = req.body;
 
   if (!subject || !topic) {
     return res.status(400).json({ success: false, error: 'Subject and Topic are required.' });
+  }
+
+  // Define clear constraints based on detail level
+  let summaryConstraint = '';
+  let keyPointsCount = 5;
+  let detailedNotesCount = 2;
+  let detailedNotesContentLength = '';
+  let practiceQuestionsCount = 3;
+  let quickRevisionCount = 5;
+
+  if (detailLevel === 'Brief') {
+    summaryConstraint = 'A single concise sentence explaining the core concept.';
+    keyPointsCount = 3;
+    detailedNotesCount = 1;
+    detailedNotesContentLength = 'Very brief overview (1-2 sentences max).';
+    practiceQuestionsCount = 2;
+    quickRevisionCount = 3;
+  } else if (detailLevel === 'Comprehensive') {
+    summaryConstraint = 'An extensive 4-5 sentence summary covering background, current applications, and core significance.';
+    keyPointsCount = 7;
+    detailedNotesCount = 4;
+    detailedNotesContentLength = 'Deep and thorough explanation (6-8 sentences minimum) covering advanced details, sub-topics, and edge cases.';
+    practiceQuestionsCount = 5;
+    quickRevisionCount = 8;
+  } else {
+    // Detailed
+    summaryConstraint = 'A moderate 2-3 sentence overview.';
+    keyPointsCount = 5;
+    detailedNotesCount = 2;
+    detailedNotesContentLength = 'Standard educational explanation (3-4 sentences).';
+    practiceQuestionsCount = 3;
+    quickRevisionCount = 5;
   }
 
   const prompt = `You are an expert professor creating study notes for a college student in India.
 
 Subject: ${subject}
 Topic: ${topic}
-Detail Level: ${detailLevel}
+Requested Detail Level: ${detailLevel}
+
+Constraints:
+1. "summary": ${summaryConstraint}
+2. "keyPoints": Generate exactly ${keyPointsCount} points.
+3. "detailedNotes": Generate exactly ${detailedNotesCount} sections. Each section's content must be: ${detailedNotesContentLength}
+4. "practiceQuestions": Generate exactly ${practiceQuestionsCount} question-answer pairs.
+5. "quickRevision": Generate exactly ${quickRevisionCount} bullet points.
 
 Return ONLY valid JSON with NO extra text or markdown fences:
 {
-  "title": "Full descriptive topic title",
-  "summary": "Clear 3-sentence overview of the topic",
+  "title": "${topic} — ${detailLevel} Study Guide",
+  "summary": "...",
   "keyPoints": [
-    "Key concept 1 explained clearly",
-    "Key concept 2",
-    "Key concept 3",
-    "Key concept 4",
-    "Key concept 5"
+    "Point 1",
+    "Point 2"
   ],
   "detailedNotes": [
     {
-      "section": "Section heading",
-      "content": "Thorough explanation suitable for ${detailLevel} level",
-      "example": "Real-world example or formula if applicable"
-    },
-    {
-      "section": "Second section heading",
-      "content": "Another detailed explanation",
-      "example": "Another example or formula"
+      "section": "Section Heading",
+      "content": "Explanation text",
+      "example": "Real-world application or formula example"
     }
   ],
   "practiceQuestions": [
-    { "question": "Question 1?", "answer": "Detailed answer 1" },
-    { "question": "Question 2?", "answer": "Detailed answer 2" },
-    { "question": "Question 3?", "answer": "Detailed answer 3" }
+    { "question": "Question 1?", "answer": "Answer 1" }
   ],
   "quickRevision": [
-    "One-line fact 1",
-    "One-line fact 2",
-    "One-line fact 3",
-    "One-line fact 4",
-    "One-line fact 5"
+    "Quick fact 1",
+    "Quick fact 2"
   ],
   "formulasOrDates": [
-    "Important formula or date 1",
-    "Important formula or date 2"
+    "Formula/Date 1",
+    "Formula/Date 2"
   ]
 }`;
 
   const messages = [
-    { role: 'system', content: 'You are an expert professor. Return only valid JSON study notes.' },
+    { role: 'system', content: 'You are an expert professor. Return only valid JSON study notes matching the length constraints.' },
     { role: 'user', content: prompt },
   ];
 
+  let notesResult = null;
+  let usedModel = 'local-fallback';
+
   try {
     const { text, model } = await callAI(messages, prompt);
-
     const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const notes = JSON.parse(clean);
-
-    return res.json({ success: true, notes, modelUsed: model });
+    notesResult = JSON.parse(clean);
+    usedModel = model;
   } catch (err) {
-    console.error('Notes generation error:', err);
+    console.error('Notes AI generation error, using fallback:', err.message);
 
-    // Local fallback so the UI always gets something useful
-    return res.json({
-      success: true,
-      notes: {
-        title: `${topic} — Complete Study Guide`,
-        summary: `${topic} is a core concept in ${subject}. Mastering this topic involves understanding its foundational principles, practical applications, and typical exam patterns. This guide covers all key areas at a ${detailLevel} level.`,
-        keyPoints: [
-          `${topic} forms the foundation of many advanced topics in ${subject}.`,
-          'Understanding the underlying principles is more valuable than memorising formulas.',
-          'Practice with past exam questions to solidify your understanding.',
-          'Connect this concept to real-world applications to remember it better.',
-          'Regular revision spaced over several days outperforms cramming.',
-        ],
-        detailedNotes: [
-          {
-            section: 'Core Concepts',
-            content: `The fundamental idea behind ${topic} in ${subject} involves understanding key definitions, relationships between variables, and underlying rules that govern its behaviour.`,
-            example: `Consider a standard textbook problem where ${topic} is applied step-by-step to derive the final result.`,
-          },
-          {
-            section: 'Applications & Importance',
-            content: `${topic} is widely applied in engineering, science, and everyday problem-solving. Its importance in ${subject} makes it a high-priority topic for board and competitive exams.`,
-            example: `Real-world scenario: industries use ${topic} to optimise processes, reduce costs, and improve accuracy.`,
-          },
-        ],
-        practiceQuestions: [
-          { question: `Define ${topic} and state its significance in ${subject}.`, answer: `${topic} refers to a fundamental concept that underpins many principles in ${subject}. It is significant because it provides a framework for analysing and solving complex problems.` },
-          { question: `What are the main properties of ${topic}?`, answer: 'The main properties include those related to scope, scale, and applicability. Each property defines a specific behaviour or constraint within the subject domain.' },
-          { question: `Give a real-world example of ${topic} in practice.`, answer: `In practice, ${topic} can be observed in systems such as manufacturing, computing, or natural phenomena depending on the specific subject context.` },
-        ],
-        quickRevision: [
-          `${topic} = core concept of ${subject}`,
-          'Always define terms before solving problems.',
-          'Use diagrams and examples to aid memory.',
-          'Connect theory to practical applications.',
-          'Revise at intervals: 1 day, 3 days, 7 days, 30 days.',
-        ],
-        formulasOrDates: [
-          'Refer to your textbook for specific formulas applicable to this topic.',
-          'Key dates and historical context are found in the introduction chapters.',
-        ],
-      },
-      modelUsed: 'local-fallback',
-    });
+    // Fallback notes built dynamically based on detailLevel
+    const fallbackKeyPoints = [
+      `${topic} is a key concept within ${subject}.`,
+      `Understanding the fundamentals of ${topic} is highly important for exams.`,
+      `Connecting ${topic} to practical implementations improves conceptual retention.`,
+    ];
+    if (detailLevel !== 'Brief') {
+      fallbackKeyPoints.push(`Make sure to solve previous year paper questions about ${topic}.`);
+      fallbackKeyPoints.push(`Regular spaced repetition sessions help in memorizing ${topic} details.`);
+    }
+    if (detailLevel === 'Comprehensive') {
+      fallbackKeyPoints.push(`Advanced topics building on ${topic} require clear foundational understanding.`);
+      fallbackKeyPoints.push(`Combine theory with active recall methods to master ${topic}.`);
+    }
+
+    const fallbackDetailed = [
+      {
+        section: 'Introduction and Basics',
+        content: `The primary concepts surrounding ${topic} include definition parameters and core rules of interaction in ${subject}.`,
+        example: `Solving a standard college worksheet problem using ${topic}.`
+      }
+    ];
+    if (detailLevel !== 'Brief') {
+      fallbackDetailed.push({
+        section: 'Applications and Industry Uses',
+        content: `In the professional field, ${topic} is leveraged for system optimization, architectural designs, or mathematical processing.`,
+        example: `Industrial implementations use ${topic} to maximize operational performance.`
+      });
+    }
+    if (detailLevel === 'Comprehensive') {
+      fallbackDetailed.push({
+        section: 'Common Errors & Edge Cases',
+        content: `Students often fail to identify boundary conditions where ${topic} behaves differently. Checking constraints is crucial.`,
+        example: `A common miscalculation is forgetting initialization values.`
+      });
+      fallbackDetailed.push({
+        section: 'Expert Exam Tips',
+        content: `Questions on ${topic} usually require you to diagram key flows or specify formula derivations. Memorize standard proofs.`,
+        example: `Deriving the standard relation for ${topic} saves time under pressure.`
+      });
+    }
+
+    notesResult = {
+      title: `${topic} — ${detailLevel} Study Guide`,
+      summary: `${topic} is a core component of ${subject}. A firm understanding of this topic is critical for both theoretical evaluation and practical programming/scientific application. This ${detailLevel.toLowerCase()} notes sheet provides key takeaways.`,
+      keyPoints: fallbackKeyPoints,
+      detailedNotes: fallbackDetailed,
+      practiceQuestions: [
+        { question: `What is the core definition of ${topic}?`, answer: `In ${subject}, ${topic} represents a fundamental structure or concept that solves domain-specific problems.` },
+        { question: `State one typical application of ${topic}.`, answer: `It is widely utilized to establish structured, predictable outcomes in practical applications.` }
+      ],
+      quickRevision: [
+        `${topic} belongs to ${subject}`,
+        'Review standard equations and definitions',
+        'Solve practice questions under mock conditions'
+      ],
+      formulasOrDates: [
+        `Refer to textbook chapter on ${topic} for formula sheets.`
+      ]
+    };
   }
+
+  // Save notes to database
+  const { error: dbErr } = await supabase.from('notes_history').insert({
+    user_id: userId,
+    subject,
+    topic,
+    content: notesResult
+  });
+
+  if (dbErr) {
+    console.error('[notes_history] Supabase error:', dbErr.code, '-', dbErr.message);
+  } else {
+    console.log(`[notes_history] Saved: user=${userId} topic=${topic} (${detailLevel})`);
+  }
+
+  return res.json({ success: true, notes: notesResult, modelUsed: usedModel });
 };

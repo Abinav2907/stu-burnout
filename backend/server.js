@@ -20,6 +20,8 @@ app.use('/api/chatbot', require('./routes/chatbot'));
 app.use('/api/burnout', require('./routes/burnout'));
 app.use('/api/notes',   require('./routes/notes'));
 app.use('/api/quiz',    require('./routes/quiz'));
+app.use('/api/pomodoro', require('./routes/pomodoro'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 
 // 404 handler
 app.use((req, res) => {
