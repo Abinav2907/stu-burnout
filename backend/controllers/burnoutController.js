@@ -115,22 +115,24 @@ Return ONLY valid JSON:
   }
 
   // ── Step 4: Upsert to Supabase ──────────────────────────────────────────
-  try {
-    await supabase.from('burnout_predictions').upsert({
-      user_id:             userId,
-      risk_level:          mlResult.riskLevel,
-      risk_score:          mlResult.riskScore,
-      burnout_probability: mlResult.burnoutProbability,
-      dropout_probability: mlResult.dropoutProbability,
-      model_confidence:    mlResult.modelConfidence ?? null,
-      source,
-      top_risk_factors:    extra.topRiskFactors,
-      recommendations:     extra.recommendations,
-      weekly_plan:         extra.weeklyPlan,
-      updated_at:          new Date().toISOString(),
-    }, { onConflict: 'user_id' });
-  } catch (dbErr) {
-    console.warn('Supabase burnout upsert skipped:', dbErr.message);
+  const { error: dbErr } = await supabase.from('burnout_predictions').upsert({
+    user_id:             userId,
+    risk_level:          mlResult.riskLevel,
+    risk_score:          mlResult.riskScore,
+    burnout_probability: mlResult.burnoutProbability,
+    dropout_probability: mlResult.dropoutProbability,
+    model_confidence:    mlResult.modelConfidence ?? null,
+    source,
+    top_risk_factors:    extra.topRiskFactors,
+    recommendations:     extra.recommendations,
+    weekly_plan:         extra.weeklyPlan,
+    updated_at:          new Date().toISOString(),
+  }, { onConflict: 'user_id' });
+
+  if (dbErr) {
+    console.error('[burnout_predictions] Supabase error:', dbErr.code, '-', dbErr.message);
+  } else {
+    console.log(`[burnout_predictions] Saved: user=${userId} riskLevel=${mlResult.riskLevel}`);
   }
 
   return res.json({

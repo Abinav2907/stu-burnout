@@ -139,23 +139,25 @@ Rules:
 };
 
 exports.saveResult = async (req, res) => {
-  const { userId = 'anonymous', subject, topic, score, totalQuestions, difficulty } = req.body;
+  const { userId = 'student_001', subject, topic, score, totalQuestions, difficulty } = req.body;
   const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
 
-  try {
-    await supabase.from('quiz_results').insert({
-      user_id:         userId,
-      subject,
-      topic,
-      score,
-      total_questions: totalQuestions,
-      percentage,
-      difficulty,
-      created_at:      new Date().toISOString(),
-    });
-    return res.json({ success: true });
-  } catch (err) {
-    console.warn('Supabase quiz save skipped:', err.message);
-    return res.json({ success: true }); // don't fail the client
+  const { error } = await supabase.from('quiz_results').insert({
+    user_id:         userId,
+    subject,
+    topic,
+    score,
+    total_questions: totalQuestions,
+    percentage,
+    difficulty,
+  });
+
+  if (error) {
+    console.error('[quiz_results] Supabase error:', error.code, '-', error.message);
+    // Still return success so UI never breaks
+    return res.json({ success: true, dbError: error.message });
   }
+
+  console.log(`[quiz_results] Saved: user=${userId} score=${score}/${totalQuestions} (${percentage}%)`);
+  return res.json({ success: true });
 };

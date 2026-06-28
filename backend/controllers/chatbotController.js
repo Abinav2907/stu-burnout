@@ -87,14 +87,14 @@ exports.sendMessage = async (req, res) => {
       }
     }
 
-    // Save to Supabase (best-effort — don't fail the request if DB is down)
-    try {
-      await supabase.from('chat_history').insert([
-        { user_id: userId, role: 'user',      content: message },
-        { user_id: userId, role: 'assistant', content: reply   },
-      ]);
-    } catch (dbErr) {
-      console.warn('Supabase chat save skipped:', dbErr.message);
+    // Save to Supabase (best-effort — print error details to console if failed)
+    const { error: dbErr } = await supabase.from('chat_history').insert([
+      { user_id: userId, role: 'user',      content: message },
+      { user_id: userId, role: 'assistant', content: reply   },
+    ]);
+
+    if (dbErr) {
+      console.error('⚠️ Supabase Chat Save Error:', dbErr.message, '-', dbErr.details || '');
     }
 
     return res.json({ success: true, reply, timetable, modelUsed: model });
