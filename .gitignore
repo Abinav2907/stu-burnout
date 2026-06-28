@@ -1,0 +1,8 @@
+node_modules/
+.env
+__pycache__/
+*.pyc
+.next/
+ml-service/venv/
+ml-service/*.pkl
+ml-service/*.joblib

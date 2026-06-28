@@ -1,0 +1,1 @@
+// Burnout predictor API routes

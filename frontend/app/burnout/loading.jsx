@@ -1,0 +1,1 @@
+// Burnout page loading state
