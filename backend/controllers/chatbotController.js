@@ -1,64 +1,105 @@
-const { GoogleGenAI } = require("@google/genai");
-const Groq = require("groq-sdk");
+/*
+ * Supabase SQL — run this in your Supabase SQL editor before using this endpoint:
+ *
+ * CREATE TABLE IF NOT EXISTS chat_history (
+ *   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+ *   user_id text NOT NULL,
+ *   role text NOT NULL CHECK (role IN ('user','assistant')),
+ *   content text NOT NULL,
+ *   created_at timestamptz DEFAULT now()
+ * );
+ * CREATE INDEX IF NOT EXISTS chat_history_user_id_idx ON chat_history(user_id);
+ */
 
-exports.handleMessage = async (req, res) => {
-  const { message, chatHistory = [] } = req.body;
-  if (!message) {
-    return res.status(400).json({ error: 'Message content is required.' });
-  }
+const { createClient } = require('@supabase/supabase-js');
+const { callAI } = require('../utils/aiHelper');
 
-  // Format message history
-  const formattedHistory = chatHistory.map((msg) => ({
-    role: msg.role === 'user' ? 'user' : 'model',
-    parts: [{ text: msg.content }],
-  }));
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
-  // Append new user message
-  formattedHistory.push({
-    role: 'user',
-    parts: [{ text: message }],
-  });
+const SYSTEM_PROMPT = `You are PrepPilot AI, a friendly and encouraging academic assistant for college students in India.
 
-  // Try Gemini 2.0 first
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (geminiKey) {
-    try {
-      const ai = new GoogleGenAI({ apiKey: geminiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: formattedHistory,
-      });
+You help with:
+1. Personalized weekly study timetables
+2. Explaining tough concepts in simple terms  
+3. Exam strategies and revision plans
+4. Stress management and motivation
 
-      return res.json({ reply: response.text });
-    } catch (err) {
-      console.warn('Gemini API failed, falling back to Groq Llama:', err.message);
+When the user asks for a timetable or schedule, include it wrapped EXACTLY like this (valid JSON inside):
+TIMETABLE_START
+{
+  "timetable": [
+    {
+      "day": "Monday",
+      "slots": [
+        { "time": "9:00 AM - 11:00 AM", "subject": "Mathematics", "topic": "Integration", "color": "#7C3AED" },
+        { "time": "2:00 PM - 4:00 PM", "subject": "Physics", "topic": "Waves", "color": "#06B6D4" }
+      ]
     }
+  ]
+}
+TIMETABLE_END
+
+For all other responses, use friendly markdown with relevant emojis. Keep responses helpful, concise, and encouraging. Address the student warmly.`;
+
+exports.sendMessage = async (req, res) => {
+  const { userId = 'anonymous', message, chatHistory = [] } = req.body;
+
+  if (!message || !message.trim()) {
+    return res.status(400).json({ success: false, error: 'Message is required.' });
   }
 
-  // Fallback to Groq Llama
-  const groqKey = process.env.GROQ_API_KEY;
-  if (groqKey) {
-    try {
-      const groq = new Groq({ apiKey: groqKey });
-      const groqHistory = chatHistory.map((msg) => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content,
-      }));
-      groqHistory.push({ role: 'user', content: message });
+  // Build messages array (keep last 10 for context window)
+  const recentHistory = chatHistory.slice(-10);
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...recentHistory.map((m) => ({ role: m.role, content: m.content })),
+    { role: 'user', content: message },
+  ];
 
-      const chatCompletion = await groq.chat.completions.create({
-        messages: groqHistory,
-        model: 'llama-3.3-70b-specdec',
-      });
+  // Gemini fallback prompt (stringify everything)
+  const fallbackPrompt =
+    SYSTEM_PROMPT +
+    '\n\nConversation so far:\n' +
+    recentHistory.map((m) => `${m.role}: ${m.content}`).join('\n') +
+    `\n\nUser: ${message}\n\nAssistant:`;
 
-      return res.json({ reply: chatCompletion.choices[0].message.content });
-    } catch (err) {
-      console.error('Groq Fallback also failed:', err.message);
+  try {
+    const { text, model } = await callAI(messages, fallbackPrompt);
+
+    // Parse timetable if present
+    let timetable = null;
+    let reply = text;
+
+    const tStart = text.indexOf('TIMETABLE_START');
+    const tEnd = text.indexOf('TIMETABLE_END');
+    if (tStart !== -1 && tEnd !== -1) {
+      try {
+        const jsonStr = text.slice(tStart + 'TIMETABLE_START'.length, tEnd).trim();
+        timetable = JSON.parse(jsonStr);
+        // Remove timetable block from display reply
+        reply = (text.slice(0, tStart) + text.slice(tEnd + 'TIMETABLE_END'.length)).trim();
+        if (!reply) reply = '📅 Here is your personalised study timetable!';
+      } catch {
+        // If JSON parse fails, keep full text
+      }
     }
-  }
 
-  // Off-grid reply if no keys are found
-  return res.json({
-    reply: "I'm PrepPilot AI, currently running in local offline demo mode. Please set up GEMINI_API_KEY or GROQ_API_KEY to start conversing with real models!",
-  });
+    // Save to Supabase (best-effort — don't fail the request if DB is down)
+    try {
+      await supabase.from('chat_history').insert([
+        { user_id: userId, role: 'user',      content: message },
+        { user_id: userId, role: 'assistant', content: reply   },
+      ]);
+    } catch (dbErr) {
+      console.warn('Supabase chat save skipped:', dbErr.message);
+    }
+
+    return res.json({ success: true, reply, timetable, modelUsed: model });
+  } catch (err) {
+    console.error('Chatbot error:', err);
+    return res.status(500).json({ success: false, error: 'AI service unavailable. Please try again.' });
+  }
 };

@@ -1,7 +1,6 @@
-const express = require('express');
-const router = express.Router();
-const notesController = require('../controllers/notesController');
+const router = require('express').Router();
+const { generateNotes } = require('../controllers/notesController');
 
-router.post('/generate', notesController.generateNotes);
+router.post('/generate', generateNotes);
 
 module.exports = router;

@@ -1,7 +1,6 @@
-const express = require('express');
-const router = express.Router();
-const burnoutController = require('../controllers/burnoutController');
+const router = require('express').Router();
+const { predictRisk } = require('../controllers/burnoutController');
 
-router.post('/predict', burnoutController.predictRisk);
+router.post('/predict', predictRisk);
 
 module.exports = router;
