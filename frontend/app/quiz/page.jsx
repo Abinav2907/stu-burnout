@@ -75,6 +75,46 @@ const BADGE_MAP = [
   { min: 0,  label: 'Keep Trying! 💪',   color: 'text-red-400 border-red-500/50 bg-red-500/15'            },
 ];
 
+const getQuizAdvice = (pct) => {
+  if (pct >= 80) {
+    return {
+      title: "Excellent Mastery! 🚀",
+      description: "Superb job! You've shown an excellent grasp of these concepts. Challenge yourself by increasing the difficulty to Hard or generating new study notes for adjacent topics.",
+      color: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5",
+    };
+  } else if (pct >= 50) {
+    return {
+      title: "Keep Building! 👍",
+      description: "Nice progress! You understand the key foundations. Go back and check the explanations for any missed answers, and do a quick Pomodoro study session to polish those points.",
+      color: "text-amber-400 border-amber-500/20 bg-amber-500/5",
+    };
+  } else {
+    return {
+      title: "Time to Revise! 📚",
+      description: "Don't worry — everyone starts somewhere! We highly recommend utilizing the Study Notes Generator to create a revision guide on this topic, study it, and try this Easy quiz again.",
+      color: "text-red-400 border-red-500/20 bg-red-500/5",
+    };
+  }
+};
+
+const getOptions = (options) => {
+  if (!options) return { A: 'Option A', B: 'Option B', C: 'Option C', D: 'Option D' };
+  if (Array.isArray(options)) {
+    return {
+      A: options[0] || 'Option A',
+      B: options[1] || 'Option B',
+      C: options[2] || 'Option C',
+      D: options[3] || 'Option D',
+    };
+  }
+  const normalized = {};
+  const letters = ['A', 'B', 'C', 'D'];
+  letters.forEach((l) => {
+    normalized[l] = options[l] || options[l.toLowerCase()] || `Option ${l}`;
+  });
+  return normalized;
+};
+
 const stepVariants = {
   enter:  { x: 100, opacity: 0 },
   center: { x: 0,   opacity: 1, transition: { type: 'spring', stiffness: 280, damping: 28 } },
@@ -307,7 +347,7 @@ export default function QuizPage() {
 
                       {/* Options */}
                       <div className="flex flex-col gap-3">
-                        {Object.entries(q.options || {}).map(([key, val], i) => {
+                        {Object.entries(getOptions(q.options)).map(([key, val], i) => {
                           const state = optionState(key);
                           return (
                             <motion.button key={key}
@@ -360,6 +400,17 @@ export default function QuizPage() {
                     <p className="text-lg font-bold text-white">{correctCount} out of {questions.length} correct</p>
                     <span className={`px-4 py-1.5 rounded-full text-sm font-black border ${badge?.color}`}>{badge?.label}</span>
                   </div>
+
+                  {/* Performance Advice */}
+                  {(() => {
+                    const advice = getQuizAdvice(pct);
+                    return (
+                      <div className={`border rounded-xl p-4 flex flex-col gap-1.5 ${advice.color}`}>
+                        <span className="text-sm font-bold uppercase tracking-wider">{advice.title}</span>
+                        <p className="text-xs text-slate-300 leading-relaxed">{advice.description}</p>
+                      </div>
+                    );
+                  })()}
 
                   {/* Question Review */}
                   <div className="flex flex-col gap-3">

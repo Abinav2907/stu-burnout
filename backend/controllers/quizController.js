@@ -76,7 +76,54 @@ Rules:
     const { text } = await callAI(messages, prompt);
     const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const parsed = JSON.parse(clean);
-    return res.json({ success: true, questions: parsed.questions });
+    
+    let questionsList = parsed.questions || parsed;
+    if (!Array.isArray(questionsList)) {
+      if (typeof questionsList === 'object' && questionsList !== null) {
+        questionsList = Object.values(questionsList);
+      } else {
+        throw new Error('Parsed response does not contain questions list');
+      }
+    }
+
+    const normalized = questionsList.map((q, idx) => {
+      const questionText = q.question || q.text || `Question ${idx + 1}`;
+      
+      let rawOpts = q.options || q.choices || q.answers || {};
+      let optionsObj = {};
+
+      if (Array.isArray(rawOpts)) {
+        const letters = ['A', 'B', 'C', 'D'];
+        letters.forEach((l, i) => {
+          optionsObj[l] = rawOpts[i] || `Option ${l}`;
+        });
+      } else if (typeof rawOpts === 'object' && rawOpts !== null) {
+        const letters = ['A', 'B', 'C', 'D'];
+        letters.forEach((l) => {
+          optionsObj[l] = rawOpts[l] || rawOpts[l.toLowerCase()] || `Option ${l}`;
+        });
+      } else {
+        optionsObj = { A: 'First option', B: 'Second option', C: 'Third option', D: 'Fourth option' };
+      }
+
+      let correct = String(q.correct || q.answer || 'A').toUpperCase().trim();
+      if (!['A', 'B', 'C', 'D'].includes(correct)) {
+        const foundKey = Object.keys(optionsObj).find(
+          (k) => optionsObj[k].toLowerCase().trim() === correct.toLowerCase()
+        );
+        correct = foundKey || 'A';
+      }
+
+      return {
+        id: q.id || idx + 1,
+        question: questionText,
+        options: optionsObj,
+        correct,
+        explanation: q.explanation || q.reason || 'Correct answer details provided above.',
+      };
+    });
+
+    return res.json({ success: true, questions: normalized });
   } catch (err) {
     console.error('Quiz generation error:', err);
     // Local fallback — deterministic questions so UI never crashes
