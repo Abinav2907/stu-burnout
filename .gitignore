@@ -6,3 +6,7 @@ __pycache__/
 ml-service/venv/
 ml-service/*.pkl
 ml-service/*.joblib
+ml/venv/
+ml/*.pkl
+ml/*.csv
+ml/*.txt
