@@ -74,24 +74,24 @@ export default function DashboardPage() {
   const displayStats = [
     {
       label: 'Quiz Score',
-      value: stats.quizScore !== null ? String(stats.quizScore) : 'None',
-      unit: stats.quizScore !== null ? '%' : '(Take Quiz)',
+      value: stats.quizScore !== null ? String(stats.quizScore) : '—',
+      unit: stats.quizScore !== null ? '%' : 'Take Quiz',
       color: 'text-violet-400',
       icon: '🎯',
       href: '/quiz'
     },
     {
       label: 'ML Prediction',
-      value: stats.mlPrediction !== null ? stats.mlPrediction : 'None',
-      unit: stats.mlPrediction !== null ? '' : '(Assess)',
+      value: stats.mlPrediction !== null ? stats.mlPrediction : '—',
+      unit: stats.mlPrediction !== null ? '' : 'Assess Burnout',
       color: stats.mlPrediction === 'HIGH' ? 'text-red-400' : stats.mlPrediction === 'MEDIUM' ? 'text-amber-400' : 'text-emerald-400',
       icon: '🧠',
       href: '/burnout'
     },
     {
       label: 'Burnout Risk',
-      value: stats.riskScore !== null ? String(stats.riskScore) : 'None',
-      unit: stats.riskScore !== null ? '%' : '(Assess)',
+      value: stats.riskScore !== null ? String(stats.riskScore) : '—',
+      unit: stats.riskScore !== null ? '%' : 'Assess Burnout',
       color: 'text-cyan-400',
       icon: '📊',
       href: '/burnout'
