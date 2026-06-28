@@ -20,9 +20,9 @@ try:
     SCALER = joblib.load(os.path.join(BASE, 'scaler.pkl'))
     with open(os.path.join(BASE, 'model_info.txt')) as f:
         ACCURACY = f.read().strip()
-    print(f"✅ Model loaded | Accuracy: {ACCURACY}%")
+    print(f"Model loaded | Accuracy: {ACCURACY}%")
 except FileNotFoundError:
-    print("❌ Model not found. Run: python generate_dataset.py && python train.py")
+    print("Model not found. Run: python generate_dataset.py && python train.py")
     MODEL  = None
     SCALER = None
     ACCURACY = "N/A"
@@ -94,5 +94,5 @@ def predict():
 
 if __name__ == '__main__':
     port = int(os.environ.get('FLASK_PORT', 5001))
-    print(f"\n🚀 PrepPilot ML Service running on http://localhost:{port}")
+    print(f"\nPrepPilot ML Service running on http://localhost:{port}")
     app.run(host='0.0.0.0', port=port, debug=False)

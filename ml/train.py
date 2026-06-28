@@ -35,7 +35,7 @@ model.fit(X_train, y_train)
 # ── Evaluate ───────────────────────────────────────────────────────────────
 y_pred   = model.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
-print(f"\n✅ Model trained! Accuracy: {accuracy * 100:.2f}%")
+print(f"\nModel trained! Accuracy: {accuracy * 100:.2f}%")
 print("\nClassification Report:")
 print(classification_report(y_test, y_pred, target_names=['LOW','MEDIUM','HIGH']))
 
@@ -47,4 +47,4 @@ joblib.dump(scaler, 'scaler.pkl')
 with open('model_info.txt', 'w') as f:
     f.write(f"{accuracy * 100:.2f}")
 
-print("📦 Saved: burnout_model.pkl, scaler.pkl, model_info.txt")
+print("Saved: burnout_model.pkl, scaler.pkl, model_info.txt")

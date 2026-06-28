@@ -66,5 +66,5 @@ df = pd.DataFrame({
 })
 
 df.to_csv('dataset.csv', index=False)
-print(f"✅ dataset.csv created — {N} records")
+print(f"dataset.csv created - {N} records")
 print(f"   Label distribution: LOW={sum(labels==0)} | MEDIUM={sum(labels==1)} | HIGH={sum(labels==2)}")
